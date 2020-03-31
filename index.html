@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>COVID-19 en Colombia</title>
+
+
+        <!-- Compiled and minified CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-image">
+                            <img src="assets/img/vir.jpg">
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title">COVID-19 en Colombia</span>
+                            <div id="chart1"><span class="title">Casos Acumulados</span></div>
+                            <br>
+                            <div id="chart2"><span class="title">Casos por día</span></div>
+                            <br>
+                            <div id="chart3"><span class="title">Total Casos</span></div>
+                            <br><br><small>Datos obtenidos del Instituto Nacional de Salud de Colombia <a href="https://www.ins.gov.co/" target="_blank">https://www.ins.gov.co/</a></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compiled and minified JavaScript -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.min.js"></script>
+        <script>
+            var margin = {top: 20, right: 20, bottom: 70, left: 40}, rawData, height, width, barras;
+            var casos = {}, sum = {}, departamentos = {}, casosDia = [];
+            var sumCasos = 0, rec = 0, dea = 0;
+            const formatNumber = d3.format(",d");
+            width = d3.select("#chart1").node().getBoundingClientRect().width - margin.left - margin.right;
+            height = (d3.select("#chart1").node().getBoundingClientRect().width/2) - margin.top - margin.bottom;
+
+            loadData();
+
+            function loadData(){
+                d3.json("https://www.datos.gov.co/resource/gt2j-8ykr.json").then(function(data){
+                    rawData = data;
+
+                    rawData.forEach(element => {
+                        if(casos[element["fecha_de_diagn_stico"]] !== undefined){
+                            casos[element["fecha_de_diagn_stico"]] += 1;
+                        }else{
+                            casos[element["fecha_de_diagn_stico"]] = 1;
+                        }
+                        if(departamentos[element["Departamento"]] !== undefined){
+                            departamentos[element["Departamento"]]["value"] += 1;
+                            if(departamentos[element["Departamento"]][element["Ciudad de ubicación"]] !== undefined){
+                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] += 1;
+                            }else{
+                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] = 1;
+                            }
+                        }else{
+                            departamentos[element["Departamento"]] = {"value":1};
+                            if(departamentos[element["Departamento"]][element["Ciudad de ubicación"]] !== undefined){
+                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] += 1;
+                            }else{
+                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] = 1;
+                            }
+                        }
+                        if(element["atenci_n"].indexOf("Recuperado") >= 0){
+                            rec++;
+                        }
+                        if(element["atenci_n"].indexOf("Fallecido") >= 0){
+                            dea++;
+                        }
+                    });
+                    for (var key in casos) {
+                        if (casos.hasOwnProperty(key)) {
+                            casosDia.push({"date": key, "value": casos[key]});
+                            sum[key] = {"date": key, "value": sumCasos + casos[key]};
+                            sumCasos = sumCasos + casos[key];
+                        }
+                    }
+
+                    barras = [];
+                    barras.push({"name":"confirmed", "value": sumCasos});
+                    barras.push({"name":"active", "value": sumCasos-rec-dea});
+                    barras.push({"name":"recovered", "value": rec});
+                    barras.push({"name":"dead", "value": dea});
+
+                    sum = Object.values(sum);
+                    drawGraphic();
+                });
+            }
+
+            function drawGraphic(){
+                var svg = d3.select("#chart1")
+                    .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                        .attr("transform",
+                            "translate(" + margin.left + "," + margin.top + ")");
+                
+                var x = d3.scaleTime()
+                    .domain(d3.extent(sum, function(d) { return d3.timeParse("%d/%m/%Y")(d.date); }))
+                    .range([ 0, width ]);
+                    svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x));
+
+                var y = d3.scaleLinear()
+                    .domain([0, d3.max(sum, function(d) { return d.value; })])
+                    .range([ height, 0 ]);
+                    svg.append("g")
+                    .call(d3.axisLeft(y));
+                
+                svg.append("path")
+                    .datum(sum)
+                    .attr("fill", "none")
+                    .attr("stroke", "#F65568")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", d3.line()
+                        .x(function(d) { return x(d3.timeParse("%d/%m/%Y")(d.date)) })
+                        .y(function(d) { return y(d.value) })
+                    );
+
+                //BARRAS
+                var svg = d3.select("#chart2")
+                    .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                        .attr("transform",
+                            "translate(" + margin.left + "," + margin.top + ")");
+                var x = d3.scaleBand()
+                    .range([ 0, width ])
+                    .domain(casosDia.map(function(d) { return d3.timeParse("%d/%m/%Y")(d.date); }))
+                    .padding(0.2);
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")))
+                    .selectAll("text")
+                        .attr("transform", "translate(-10,0)rotate(-45)")
+                        .style("text-anchor", "end");
+                var y = d3.scaleLinear()
+                    .domain([0, d3.max(casosDia, function(d) { return d.value; })])
+                    .range([ height, 0]);
+                svg.append("g")
+                    .call(d3.axisLeft(y));
+                svg.selectAll("mybar")
+                    .data(casosDia)
+                    .enter()
+                        .append("rect")
+                            .attr("x", function(d) { return x( d3.timeParse("%d/%m/%Y")(d.date)); })
+                            .attr("y", function(d) { return y(d.value); })
+                            .attr("width", x.bandwidth())
+                            .attr("height", function(d) { return height - y(d.value); })
+                            .attr("fill", '#F65568')
+                svg.selectAll("mybar")
+                    .data(casosDia)
+                    .enter()
+                        .append("text")
+                            .attr("x", function(d) { return x( d3.timeParse("%d/%m/%Y")(d.date)) + x.bandwidth()/2 - 10; })
+                            .attr("y", function(d) { return y(d.value) - 5; })
+                            .text( (d) => d.value )
+                                .style("fill", "black")
+                                .style("font-family", "Helvetica")
+                                .style("font-size", "18px");
+
+                
+                var color = d3.scaleOrdinal()
+                    .domain(["confirmed","active","recovered","dead"])
+                    .range(['#F65568','#FFB958','#6ADE4C','#4682B4']);
+                    
+                var svg = d3.select("#chart3")
+                    .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                        .attr("transform",
+                            "translate(" + margin.left + "," + margin.top + ")");
+                var x = d3.scaleBand()
+                    .range([ 0, width ])
+                    .domain(barras.map(function(d) { return d.name; }))
+                    .padding(0.2);
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x))
+                    .selectAll("text")
+                        .attr("transform", "translate(-10,0)rotate(-45)")
+                        .style("text-anchor", "end")
+                        .style("font-size", "18px");
+                var y = d3.scaleLinear()
+                    .domain([0, d3.max(barras, function(d) { return d.value; })])
+                    .range([ height, 0]);
+                svg.append("g")
+                    .call(d3.axisLeft(y));
+                svg.selectAll("mybar")
+                    .data(barras)
+                    .enter()
+                        .append("rect")
+                            .attr("x", function(d) { return x(d.name); })
+                            .attr("y", function(d) { return y(d.value); })
+                            .attr("width", x.bandwidth())
+                            .attr("height", function(d) { return height - y(d.value); })
+                            .attr("fill", function(d) { return color(d.name); })
+                svg.selectAll("mybar")
+                    .data(barras)
+                    .enter()
+                        .append("text")
+                            .attr("x", function(d) { return x(d.name) + x.bandwidth()/2 - 10; })
+                            .attr("y", function(d) { return y(d.value) - 5; })
+                            .text( (d) => d.value )
+                                .style("fill", "black")
+                                .style("font-family", "Helvetica")
+                                .style("font-size", "18px");
+            }
+        </script>
+    </body>
+</html>
