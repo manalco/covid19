@@ -45,14 +45,14 @@
             loadData();
 
             function loadData(){
-                d3.json("https://www.datos.gov.co/resource/gt2j-8ykr.json").then(function(data){
+                d3.csv("https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessType=DOWNLOAD").then(function(data){
                     rawData = data;
-
+console.log(data);
                     rawData.forEach(element => {
-                        if(casos[element["fecha_de_diagn_stico"]] !== undefined){
-                            casos[element["fecha_de_diagn_stico"]] += 1;
+                        if(casos[element["Fecha de diagnóstico"]] !== undefined){
+                            casos[element["Fecha de diagnóstico"]] += 1;
                         }else{
-                            casos[element["fecha_de_diagn_stico"]] = 1;
+                            casos[element["Fecha de diagnóstico"]] = 1;
                         }
                         if(departamentos[element["Departamento"]] !== undefined){
                             departamentos[element["Departamento"]]["value"] += 1;
@@ -69,10 +69,10 @@
                                 departamentos[element["Departamento"]][element["Ciudad de ubicación"]] = 1;
                             }
                         }
-                        if(element["atenci_n"].indexOf("Recuperado") >= 0){
+                        if(element["Atención"].indexOf("Recuperado") >= 0){
                             rec++;
                         }
-                        if(element["atenci_n"].indexOf("Fallecido") >= 0){
+                        if(element["Atención"].indexOf("Fallecido") >= 0){
                             dea++;
                         }
                     });
