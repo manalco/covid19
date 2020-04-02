@@ -19,12 +19,17 @@
                         </div>
                         <div class="card-content">
                             <span class="card-title">COVID-19 en Colombia</span>
+                            <div id="chart3"><span class="title">Total Casos</span></div>
+                            <br>
                             <div id="chart1"><span class="title">Casos Acumulados</span></div>
                             <br>
                             <div id="chart2"><span class="title">Casos por día</span></div>
                             <br>
-                            <div id="chart3"><span class="title">Total Casos</span></div>
-                            <br><br><small>Datos obtenidos del Instituto Nacional de Salud de Colombia <a href="https://www.ins.gov.co/" target="_blank">https://www.ins.gov.co/</a></small>
+                            <div id="chart4"><span class="title">Casos por Departamento</span></div>
+                            <br>
+                            <div id="chart5"><span class="title">Casos por Municipio</span></div>
+                            <br><br>
+                            <small>Datos obtenidos del Instituto Nacional de Salud de Colombia <a href="https://www.ins.gov.co/" target="_blank">https://www.ins.gov.co/</a></small>
                         </div>
                     </div>
                 </div>
@@ -36,7 +41,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.min.js"></script>
         <script>
             var margin = {top: 20, right: 20, bottom: 70, left: 40}, rawData, height, width, barras;
-            var casos = {}, sum = {}, departamentos = {}, casosDia = [];
+            var casos = {}, sum = {}, departamentos = {}, municipios = {}, departamentosTot = [], municipiosTot = [], casosDia = [];
             var sumCasos = 0, rec = 0, dea = 0;
             const formatNumber = d3.format(",d");
             width = d3.select("#chart1").node().getBoundingClientRect().width - margin.left - margin.right;
@@ -54,19 +59,19 @@ console.log(data);
                         }else{
                             casos[element["Fecha de diagnóstico"]] = 1;
                         }
-                        if(departamentos[element["Departamento"]] !== undefined){
-                            departamentos[element["Departamento"]]["value"] += 1;
-                            if(departamentos[element["Departamento"]][element["Ciudad de ubicación"]] !== undefined){
-                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] += 1;
+                        if(departamentos[element["Departamento o Distrito "]] !== undefined){
+                            departamentos[element["Departamento o Distrito "]]["value"] += 1;
+                            if(departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] !== undefined){
+                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] += 1;
                             }else{
-                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] = 1;
+                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] = 1;
                             }
                         }else{
-                            departamentos[element["Departamento"]] = {"value":1};
-                            if(departamentos[element["Departamento"]][element["Ciudad de ubicación"]] !== undefined){
-                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] += 1;
+                            departamentos[element["Departamento o Distrito "]] = {"value":1};
+                            if(departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] !== undefined){
+                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] += 1;
                             }else{
-                                departamentos[element["Departamento"]][element["Ciudad de ubicación"]] = 1;
+                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] = 1;
                             }
                         }
                         if(element["Atención"].indexOf("Recuperado") >= 0){
@@ -74,6 +79,11 @@ console.log(data);
                         }
                         if(element["Atención"].indexOf("Fallecido") >= 0){
                             dea++;
+                        }
+                        if(municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] !== undefined){
+                            municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] += 1;
+                        }else{
+                            municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] = 1;
                         }
                     });
                     for (var key in casos) {
@@ -83,6 +93,16 @@ console.log(data);
                             sumCasos = sumCasos + casos[key];
                         }
                     }
+                    for (var key in departamentos) {
+                        if (departamentos.hasOwnProperty(key)) {
+                            departamentosTot.push({"Departamento": key, "value": departamentos[key]['value']});
+                        }
+                    }
+                    for (var key in municipios) {
+                        if (municipios.hasOwnProperty(key)) {
+                            municipiosTot.push({"Municipio": key, "value": municipios[key]});
+                        }
+                    }
 
                     barras = [];
                     barras.push({"name":"confirmed", "value": sumCasos});
@@ -90,7 +110,7 @@ console.log(data);
                     barras.push({"name":"recovered", "value": rec});
                     barras.push({"name":"dead", "value": dea});
 
-                    sum = Object.values(sum);
+                    sum = Object.values(sum);console.log(municipiosTot);
                     drawGraphic();
                 });
             }
@@ -158,7 +178,7 @@ console.log(data);
                             .attr("y", function(d) { return y(d.value); })
                             .attr("width", x.bandwidth())
                             .attr("height", function(d) { return height - y(d.value); })
-                            .attr("fill", '#F65568')
+                            .attr("fill", '#FFCBAB')
                 svg.selectAll("mybar")
                     .data(casosDia)
                     .enter()
@@ -217,6 +237,98 @@ console.log(data);
                                 .style("fill", "black")
                                 .style("font-family", "Helvetica")
                                 .style("font-size", "18px");
+
+                departamentosTot.sort(function(a, b) { return d3.descending(a.value, b.value)})
+                var svg = d3.select("#chart4")
+                  .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                  .append("g")
+                    .attr("transform",
+                          "translate(" + (margin.left + 90) + "," + margin.top + ")");
+
+                var x = d3.scaleLinear()
+                    .domain([0, d3.max(departamentosTot, function(d) { return d.value; })])
+                    .range([ 0, width - 100]);
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x))
+                    .selectAll("text")
+                      .attr("transform", "translate(-10,0)rotate(-45)")
+                      .style("text-anchor", "end");
+
+                var y = d3.scaleBand()
+                    .range([ 0, height ])
+                    .domain(departamentosTot.map(function(d) { return d.Departamento; }))
+                    .padding(.1);
+                svg.append("g")
+                    .call(d3.axisLeft(y))
+                
+                svg.selectAll("myRect")
+                    .data(departamentosTot)
+                    .enter()
+                    .append("rect")
+                    .attr("x", x(0) )
+                    .attr("y", function(d) { return y(d.Departamento); })
+                    .attr("width", function(d) { return x(d.value); })
+                    .attr("height", y.bandwidth() )
+                    .attr("fill", "#FFCBAB");
+                svg.selectAll("myRect")
+                    .data(departamentosTot)
+                    .enter()
+                        .append("text")
+                            .attr("x", function(d) { return x(d.value) + 2; })
+                            .attr("y", function(d) { return y(d.Departamento) + y.bandwidth(); })
+                            .text( (d) => d.value )
+                                .style("fill", "black")
+                                .style("font-family", "Helvetica")
+                                .style("font-size", "10px");
+
+                municipiosTot.sort(function(a, b) { return d3.descending(a.value, b.value)});
+                var svg = d3.select("#chart5")
+                  .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", (municipiosTot.length * 20) + margin.top + margin.bottom)
+                  .append("g")
+                    .attr("transform",
+                          "translate(" + (margin.left + 150) + "," + margin.top + ")");
+
+                var x = d3.scaleLinear()
+                    .domain([0, d3.max(municipiosTot, function(d) { return d.value; })])
+                    .range([ 0, width - 150]);
+                svg.append("g")
+                    .attr("transform", "translate(0," + (municipiosTot.length * 20) + ")")
+                    .call(d3.axisBottom(x))
+                    .selectAll("text")
+                      .attr("transform", "translate(-10,0)rotate(-45)")
+                      .style("text-anchor", "end");
+
+                var y = d3.scaleBand()
+                    .range([ 0, (municipiosTot.length * 20) ])
+                    .domain(municipiosTot.map(function(d) { return d.Municipio; }))
+                    .padding(.1);
+                svg.append("g")
+                    .call(d3.axisLeft(y))
+                
+                svg.selectAll("myRect")
+                    .data(municipiosTot)
+                    .enter()
+                    .append("rect")
+                    .attr("x", x(0) )
+                    .attr("y", function(d) { return y(d.Municipio); })
+                    .attr("width", function(d) { return x(d.value); })
+                    .attr("height", y.bandwidth() )
+                    .attr("fill", "#FFCBAB");
+                svg.selectAll("myRect")
+                    .data(municipiosTot)
+                    .enter()
+                        .append("text")
+                            .attr("x", function(d) { return x(d.value) + 2; })
+                            .attr("y", function(d) { return y(d.Municipio) + y.bandwidth(); })
+                            .text( (d) => d.value )
+                                .style("fill", "black")
+                                .style("font-family", "Helvetica")
+                                .style("font-size", "10px");
             }
         </script>
     </body>
