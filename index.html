@@ -118,15 +118,15 @@ console.log(data);
             function drawGraphic(){
                 var svg = d3.select("#chart1")
                     .append("svg")
-                        .attr("width", width + margin.left + margin.right)
+                        .attr("width", width + margin.left + margin.right -20)
                         .attr("height", height + margin.top + margin.bottom)
                     .append("g")
                         .attr("transform",
-                            "translate(" + margin.left + "," + margin.top + ")");
+                            "translate(" + (margin.left+20) + "," + margin.top + ")");
                 
                 var x = d3.scaleTime()
                     .domain(d3.extent(sum, function(d) { return d3.timeParse("%d/%m/%Y")(d.date); }))
-                    .range([ 0, width ]);
+                    .range([ 0, width-20 ]);
                     svg.append("g")
                     .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(x));
@@ -146,17 +146,31 @@ console.log(data);
                         .x(function(d) { return x(d3.timeParse("%d/%m/%Y")(d.date)) })
                         .y(function(d) { return y(d.value) })
                     );
+                svg.append("text")             
+                    .attr("transform",
+                        "translate(" + (width/2) + " ," + 
+                                       (height + margin.top + 20) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Fecha");
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left -20)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Casos confirmados acumulados"); 
+                
 
                 //BARRAS
                 var svg = d3.select("#chart2")
                     .append("svg")
-                        .attr("width", width + margin.left + margin.right)
+                        .attr("width", width + margin.left + margin.right - 20)
                         .attr("height", height + margin.top + margin.bottom)
                     .append("g")
                         .attr("transform",
-                            "translate(" + margin.left + "," + margin.top + ")");
+                            "translate(" + (margin.left+20) + "," + margin.top + ")");
                 var x = d3.scaleBand()
-                    .range([ 0, width ])
+                    .range([ 0, (width-20) ])
                     .domain(casosDia.map(function(d) { return d3.timeParse("%d/%m/%Y")(d.date); }))
                     .padding(0.2);
                 svg.append("g")
@@ -189,6 +203,19 @@ console.log(data);
                                 .style("fill", "black")
                                 .style("font-family", "Helvetica")
                                 .style("font-size", "18px");
+                svg.append("text")             
+                    .attr("transform",
+                        "translate(" + (width/2) + " ," + 
+                                       (height + margin.top + 20) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Fecha");
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left -20)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Casos confirmados diarios"); 
 
                 
                 var color = d3.scaleOrdinal()
@@ -197,13 +224,13 @@ console.log(data);
                     
                 var svg = d3.select("#chart3")
                     .append("svg")
-                        .attr("width", width + margin.left + margin.right)
+                        .attr("width", width + margin.left + margin.right-20)
                         .attr("height", height + margin.top + margin.bottom)
                     .append("g")
                         .attr("transform",
-                            "translate(" + margin.left + "," + margin.top + ")");
+                            "translate(" + (margin.left +20)+ "," + margin.top + ")");
                 var x = d3.scaleBand()
-                    .range([ 0, width ])
+                    .range([ 0, width-20 ])
                     .domain(barras.map(function(d) { return d.name; }))
                     .padding(0.2);
                 svg.append("g")
@@ -212,7 +239,7 @@ console.log(data);
                     .selectAll("text")
                         .attr("transform", "translate(-10,0)rotate(-45)")
                         .style("text-anchor", "end")
-                        .style("font-size", "18px");
+                        .style("font-size", "16px");
                 var y = d3.scaleLinear()
                     .domain([0, d3.max(barras, function(d) { return d.value; })])
                     .range([ height, 0]);
@@ -236,7 +263,20 @@ console.log(data);
                             .text( (d) => d.value )
                                 .style("fill", "black")
                                 .style("font-family", "Helvetica")
-                                .style("font-size", "18px");
+                                .style("font-size", "16px");
+                svg.append("text")             
+                    .attr("transform",
+                        "translate(" + (width/2) + " ," + 
+                                       (height + margin.top + 50) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Tipo de caso");
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left -20)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Número de casos"); 
 
                 departamentosTot.sort(function(a, b) { return d3.descending(a.value, b.value)})
                 var svg = d3.select("#chart4")
@@ -283,6 +323,19 @@ console.log(data);
                                 .style("fill", "black")
                                 .style("font-family", "Helvetica")
                                 .style("font-size", "10px");
+                svg.append("text")             
+                    .attr("transform",
+                        "translate(" + (width/2) + " ," + 
+                                       (height + margin.top + 20) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Casos confirmados");
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left -90)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Departamento"); 
 
                 municipiosTot.sort(function(a, b) { return d3.descending(a.value, b.value)});
                 var svg = d3.select("#chart5")
@@ -329,6 +382,19 @@ console.log(data);
                                 .style("fill", "black")
                                 .style("font-family", "Helvetica")
                                 .style("font-size", "10px");
+                svg.append("text")             
+                    .attr("transform",
+                        "translate(" + (width/2) + " ," + 
+                                       ((municipiosTot.length * 20) + margin.top + 20) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Casos confirmados");
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left -150)
+                    .attr("x",0 - ((municipiosTot.length * 20) / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Municipio"); 
             }
         </script>
     </body>
