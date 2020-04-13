@@ -8,6 +8,7 @@
 
         <!-- Compiled and minified CSS -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     </head>
     <body>
         <div class="container">
@@ -19,17 +20,85 @@
                         </div>
                         <div class="card-content">
                             <span class="card-title">COVID-19 en Colombia</span>
-                            <div id="chart3"><span class="title">Total Casos</span></div>
-                            <br>
-                            <div id="chart1"><span class="title">Casos Acumulados</span></div>
-                            <br>
-                            <div id="chart2"><span class="title">Casos por día</span></div>
-                            <br>
-                            <div id="chart4"><span class="title">Casos por Departamento</span></div>
-                            <br>
-                            <div id="chart5"><span class="title">Casos por Municipio</span></div>
-                            <br><br>
-                            <small>Datos obtenidos del Instituto Nacional de Salud de Colombia <a href="https://www.ins.gov.co/" target="_blank">https://www.ins.gov.co/</a></small>
+                            <p>Datos obtenidos del <a href="https://www.ins.gov.co/" target="_blank">Instituto Nacional de Salud de Colombia</a> a través de <a href="https://www.datos.gov.co/Salud-y-Protecci-n-Social/Casos-positivos-de-COVID-19-en-Colombia/gt2j-8ykr" target="_blank">Datos Abiertos de Colombia</a>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--div class="row">
+                <div class="col s12">
+                    <div class="card yellow lighten-4">
+                        <div class="card-content">
+                            <span class="card-title">Filtros</span>
+                            <form>
+                                <div class="input-field col s4">
+                                    <select id="departamentos">
+                                        <option value="" disabled selected>- Departamento -</option>
+                                    </select>
+                                </div>
+                                <div class="input-field col s4">
+                                    <select id="municipios">
+                                        <option value="" disabled selected>- Municipio -</option>
+                                    </select>
+                                </div>
+                                <div class="input-field col s3">
+                                    <button class="btn btn-primary">Limpiar</button>
+                                </div>
+                                <div class="input-field col s1"><i class="material-icons left">filter_list</i></div>
+                            </form>
+                            <div class="clearfix"></div>
+                        </div>
+                    </div>
+                </div>
+            </div-->
+
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Total Casos</span>
+                            <div id="chart3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Casos Acumulados</span>
+                            <div id="chart1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Casos por Día</span>
+                            <div id="chart2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Casos por Departamento</span>
+                            <div id="chart4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Casos por Municipio</span>
+                            <div id="chart5"></div>
                         </div>
                     </div>
                 </div>
@@ -37,6 +106,7 @@
         </div>
 
         <!-- Compiled and minified JavaScript -->
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.min.js"></script>
         <script>
@@ -52,7 +122,7 @@
             function loadData(){
                 d3.csv("https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessType=DOWNLOAD").then(function(data){
                     rawData = data;
-console.log(data);
+
                     rawData.forEach(element => {
                         if(casos[element["Fecha de diagnóstico"]] !== undefined){
                             casos[element["Fecha de diagnóstico"]] += 1;
@@ -96,6 +166,7 @@ console.log(data);
                     for (var key in departamentos) {
                         if (departamentos.hasOwnProperty(key)) {
                             departamentosTot.push({"Departamento": key, "value": departamentos[key]['value']});
+                            $('#departamentos').append('<option value="'+key+'">'+key+'</option>');
                         }
                     }
                     for (var key in municipios) {
@@ -110,7 +181,7 @@ console.log(data);
                     barras.push({"name":"recovered", "value": rec});
                     barras.push({"name":"dead", "value": dea});
 
-                    sum = Object.values(sum);console.log(municipiosTot);
+                    sum = Object.values(sum);
                     drawGraphic();
                 });
             }
@@ -202,7 +273,7 @@ console.log(data);
                             .text( (d) => d.value )
                                 .style("fill", "black")
                                 .style("font-family", "Helvetica")
-                                .style("font-size", "18px");
+                                .style("font-size", "10px");
                 svg.append("text")             
                     .attr("transform",
                         "translate(" + (width/2) + " ," + 
@@ -282,7 +353,7 @@ console.log(data);
                 var svg = d3.select("#chart4")
                   .append("svg")
                     .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
+                    .attr("height", (departamentosTot.length * 20) + margin.top + margin.bottom)
                   .append("g")
                     .attr("transform",
                           "translate(" + (margin.left + 90) + "," + margin.top + ")");
@@ -291,14 +362,14 @@ console.log(data);
                     .domain([0, d3.max(departamentosTot, function(d) { return d.value; })])
                     .range([ 0, width - 100]);
                 svg.append("g")
-                    .attr("transform", "translate(0," + height + ")")
+                    .attr("transform", "translate(0," + (departamentosTot.length * 20) + ")")
                     .call(d3.axisBottom(x))
                     .selectAll("text")
                       .attr("transform", "translate(-10,0)rotate(-45)")
                       .style("text-anchor", "end");
 
                 var y = d3.scaleBand()
-                    .range([ 0, height ])
+                    .range([ 0, (departamentosTot.length * 20) ])
                     .domain(departamentosTot.map(function(d) { return d.Departamento; }))
                     .padding(.1);
                 svg.append("g")
@@ -326,13 +397,13 @@ console.log(data);
                 svg.append("text")             
                     .attr("transform",
                         "translate(" + (width/2) + " ," + 
-                                       (height + margin.top + 20) + ")")
+                                       ((departamentosTot.length * 20) + margin.top + 20) + ")")
                     .style("text-anchor", "middle")
                     .text("Casos confirmados");
                 svg.append("text")
                     .attr("transform", "rotate(-90)")
                     .attr("y", 0 - margin.left -90)
-                    .attr("x",0 - (height / 2))
+                    .attr("x",0 - ((departamentosTot.length * 20) / 2))
                     .attr("dy", "1em")
                     .style("text-anchor", "middle")
                     .text("Departamento"); 
@@ -394,8 +465,23 @@ console.log(data);
                     .attr("x",0 - ((municipiosTot.length * 20) / 2))
                     .attr("dy", "1em")
                     .style("text-anchor", "middle")
-                    .text("Municipio"); 
+                    .text("Municipio");
+
+                $('select').formSelect();
             }
+
+            $(document).ready(function(){
+                $('#departamentos').change(function(){
+                    $('#municipios').html('<option value="" disabled selected>- Municipio -</option>')
+                    var selected = departamentos[$(this).val()];
+                    for (var key in selected) {
+                        if (selected.hasOwnProperty(key) && key != 'value') {
+                            $('#municipios').append('<option value="'+key+'">'+key+'</option>');
+                        }
+                    }
+                    $('#municipios').formSelect();
+                });
+            });
         </script>
     </body>
 </html>
