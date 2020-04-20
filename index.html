@@ -9,6 +9,14 @@
         <!-- Compiled and minified CSS -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <style type="text/css">
+            .Recuperado{
+                color: #6ADE4C;
+            }
+            .Fallecido{
+                color: #F65568;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
@@ -102,6 +110,29 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Tabla de Casos</span>
+                            <table class="table">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <td scope="col">ID</td>
+                                        <td scope="col">Ciudad</td>
+                                        <td scope="col">Departamento</td>
+                                        <td scope="col">Edad</td>
+                                        <td scope="col">Sexo</td>
+                                        <td scope="col">Diagnóstico<br><small>(AAAA-MM-DD)</small></td>
+                                        <td scope="col">Estado</td>
+                                    </tr>
+                                </thead>
+                                <tbody class="tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Compiled and minified JavaScript -->
@@ -121,7 +152,7 @@
             function loadData(){
                 d3.csv("https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessType=DOWNLOAD").then(function(data){
                     rawData = data;
-
+//console.log(data);
                     processData();
                 });
             }
@@ -130,12 +161,15 @@
                 casos = {}; sum = {}; departamentos = {}; municipios = {}; departamentosTot = []; municipiosTot = []; casosDia = []; sumCasos = 0; rec = 0; dea = 0;
                 var depar = $('#departamentos').val();
                 var muni = $('#municipios').val();
+                
+                $('.tbody').html('');
+
                 rawData.forEach(element => {
                     if((muni && element["Ciudad de ubicación"] == muni) || (depar && element["Departamento o Distrito "] == depar && !muni) || (!depar && !muni)){
-                        if(casos[element["Fecha de diagnóstico"]] !== undefined){
-                            casos[element["Fecha de diagnóstico"]] += 1;
+                        if(casos[element["Fecha diagnostico"].substring(0,10)] !== undefined){
+                            casos[element["Fecha diagnostico"].substring(0,10)] += 1;
                         }else{
-                            casos[element["Fecha de diagnóstico"]] = 1;
+                            casos[element["Fecha diagnostico"].substring(0,10)] = 1;
                         }
                         if(departamentos[element["Departamento o Distrito "]] !== undefined){
                             departamentos[element["Departamento o Distrito "]]["value"] += 1;
@@ -152,23 +186,30 @@
                                 departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] = 1;
                             }
                         }
-                        if(element["Atención"].indexOf("Recuperado") >= 0){
+                        if(element["atención"].indexOf("Recuperado") >= 0){
                             rec++;
                         }
-                        if(element["Atención"].indexOf("Fallecido") >= 0){
+
+                        var isDead = '';
+                        if(element["atención"].indexOf("Fallecido") >= 0){
                             dea++;
+                            isDead = " ("+element['Fecha de muerte'].substring(0,10)+")";
                         }
                         if(municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] !== undefined){
                             municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] += 1;
                         }else{
                             municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] = 1;
                         }
+
+                        var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Ciudad de ubicación']+"</td><td>"+element['Departamento o Distrito ']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+element["Fecha diagnostico"].substring(0,10)+"</td><td class='"+element['atención']+"'>"+element['atención']+isDead+"</td></tr>";
+                        $('.tbody').append(row);
                     }
                 });
+
                 for (var key in casos) {
                     if (casos.hasOwnProperty(key)) {
-                        casosDia.push({"date": key, "value": casos[key]});
-                        sum[key] = {"date": key, "value": sumCasos + casos[key]};
+                        casosDia.push({"date": d3.timeParse("%Y-%m-%d")(key), "value": casos[key]});
+                        sum[key] = {"date": d3.timeParse("%Y-%m-%d")(key), "value": sumCasos + casos[key]};
                         sumCasos = sumCasos + casos[key];
                     }
                 }
@@ -191,6 +232,7 @@
                 barras.push({"name":"Fallecidos", "value": dea});
 
                 sum = Object.values(sum);
+                
                 drawGraphic();
             }
 
@@ -210,7 +252,7 @@
                 
                 var x = d3.scaleBand()
                     .range([ 0, (width-20) ])
-                    .domain(sum.map(function(d) { return d3.timeParse("%d/%m/%Y")(d.date); }))
+                    .domain(sum.map(function(d) { return d.date; }))
                     .padding(0.2);
                 svg.append("g")
                     .attr("transform", "translate(0," + height + ")")
@@ -236,7 +278,7 @@
                     .attr("stroke", "#F65568")
                     .attr("stroke-width", 1.5)
                     .attr("d", d3.line()
-                        .x(function(d) { return x(d3.timeParse("%d/%m/%Y")(d.date)) })
+                        .x(function(d) { return x(d.date) })
                         .y(function(d) { return y(d.value) })
                     );
                 svg.append("text")             
@@ -264,7 +306,7 @@
                             "translate(" + (margin.left+20) + "," + margin.top + ")");
                 var x = d3.scaleBand()
                     .range([ 0, (width-20) ])
-                    .domain(casosDia.map(function(d) { return d3.timeParse("%d/%m/%Y")(d.date); }))
+                    .domain(casosDia.map(function(d) { return d.date; }))
                     .padding(0.2);
                 svg.append("g")
                     .attr("transform", "translate(0," + height + ")")
@@ -281,7 +323,7 @@
                     .data(casosDia)
                     .enter()
                         .append("rect")
-                            .attr("x", function(d) { return x( d3.timeParse("%d/%m/%Y")(d.date)); })
+                            .attr("x", function(d) { return x( d.date); })
                             .attr("y", function(d) { return y(d.value); })
                             .attr("width", x.bandwidth())
                             .attr("height", function(d) { return height - y(d.value); })
@@ -290,7 +332,7 @@
                     .data(casosDia)
                     .enter()
                         .append("text")
-                            .attr("x", function(d) { return x( d3.timeParse("%d/%m/%Y")(d.date)) + x.bandwidth()/2 - 10; })
+                            .attr("x", function(d) { return x( d.date) + x.bandwidth()/2 - 10; })
                             .attr("y", function(d) { return y(d.value) - 5; })
                             .text( (d) => d.value )
                                 .style("fill", "black")
