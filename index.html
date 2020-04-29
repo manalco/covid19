@@ -115,6 +115,7 @@
                     <div class="card">
                         <div class="card-content">
                             <span class="card-title">Tabla de Casos</span>
+                            <!--div id="table"></div-->
                             <table class="table">
                                 <thead class="thead-dark">
                                     <tr>
@@ -139,6 +140,7 @@
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.min.js"></script>
+        <script src="https://pagination.js.org/dist/2.1.5/pagination.min.js"></script>
         <script>
             var margin = {top: 20, right: 20, bottom: 70, left: 40}, rawData, height, width, barras;
             var casos = {}, sum = {}, departamentos = {}, municipios = {}, departamentosTot = [], municipiosTot = [], casosDia = [];
@@ -152,7 +154,7 @@
             function loadData(){
                 d3.csv("https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessType=DOWNLOAD").then(function(data){
                     rawData = data;
-//console.log(data);
+                    rawData.sort(function(a, b) { return d3.ascending(a["Fecha diagnostico"], b["Fecha diagnostico"])})
                     processData();
                 });
             }
@@ -161,6 +163,7 @@
                 casos = {}; sum = {}; departamentos = {}; municipios = {}; departamentosTot = []; municipiosTot = []; casosDia = []; sumCasos = 0; rec = 0; dea = 0;
                 var depar = $('#departamentos').val();
                 var muni = $('#municipios').val();
+                var rows = [];
                 
                 $('.tbody').html('');
 
@@ -203,6 +206,7 @@
 
                         var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Ciudad de ubicación']+"</td><td>"+element['Departamento o Distrito ']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+element["Fecha diagnostico"].substring(0,10)+"</td><td class='"+element['atención']+"'>"+element['atención']+isDead+"</td></tr>";
                         $('.tbody').append(row);
+                        //rows.push({"ID":element['ID de caso'], "Ciudad":element['Ciudad de ubicación'], "Departamento":element['Departamento o Distrito '], "Edad":element['Edad'], "Sexo":element['Sexo'], "Diagnóstico (AAAA-MM-DD)":element["Fecha diagnostico"].substring(0,10),"Estado":element['atención']+isDead});
                     }
                 });
 
@@ -275,7 +279,7 @@
                 svg.append("path")
                     .datum(sum)
                     .attr("fill", "none")
-                    .attr("stroke", "#F65568")
+                    .attr("stroke", "#4682B4")
                     .attr("stroke-width", 1.5)
                     .attr("d", d3.line()
                         .x(function(d) { return x(d.date) })
@@ -327,7 +331,7 @@
                             .attr("y", function(d) { return y(d.value); })
                             .attr("width", x.bandwidth())
                             .attr("height", function(d) { return height - y(d.value); })
-                            .attr("fill", '#FFCBAB')
+                            .attr("fill", '#4682B4')
                 svg.selectAll("mybar")
                     .data(casosDia)
                     .enter()
@@ -355,7 +359,7 @@
                 
                 var color = d3.scaleOrdinal()
                     .domain(["Confirmados","Activos","Recuperados","Fallecidos"])
-                    .range(['#F65568','#FFB958','#6ADE4C','#4682B4']);
+                    .range(['#4682B4','#FFB958','#6ADE4C','#F65568']);
                     
                 var svg = d3.select("#chart3")
                     .append("svg")
@@ -447,7 +451,7 @@
                     .attr("y", function(d) { return y(d.Departamento); })
                     .attr("width", function(d) { return x(d.value); })
                     .attr("height", y.bandwidth() )
-                    .attr("fill", "#FFCBAB");
+                    .attr("fill", "#4682B4");
                 svg.selectAll("myRect")
                     .data(departamentosTot)
                     .enter()
@@ -506,7 +510,7 @@
                     .attr("y", function(d) { return y(d.Municipio); })
                     .attr("width", function(d) { return x(d.value); })
                     .attr("height", y.bandwidth() )
-                    .attr("fill", "#FFCBAB");
+                    .attr("fill", "#4682B4");
                 svg.selectAll("myRect")
                     .data(municipiosTot)
                     .enter()
