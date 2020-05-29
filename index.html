@@ -164,6 +164,33 @@
                 var depar = $('#departamentos').val();
                 var muni = $('#municipios').val();
                 var rows = [];
+                var startDate = new Date(rawData[0]["Fecha diagnostico"]), endDate = new Date(rawData[rawData.length-1]["Fecha diagnostico"]);
+                var formatDate = function(date){let day = date.getDate()
+                    let month = date.getMonth() + 1
+                    let year = date.getFullYear()
+
+                    if(month < 10){
+                        month = `0${month}`;
+                    }
+                    if(day < 10){
+                        day = `0${day}`;
+                    }
+                    return `${year}-${month}-${day}`;
+                }
+                var getDateArray = function(start, end) {
+
+                  var
+                    arr = new Array(),
+                    dt = new Date(start);
+
+                  while (dt <= end) {
+                    arr.push(formatDate(new Date(dt)));
+                    dt.setDate(dt.getDate() + 1);
+                  }
+
+                  return arr;
+
+                }
                 
                 $('.tbody').html('');
 
@@ -210,13 +237,20 @@
                     }
                 });
 
-                for (var key in casos) {
-                    if (casos.hasOwnProperty(key)) {
-                        casosDia.push({"date": d3.timeParse("%Y-%m-%d")(key), "value": casos[key]});
-                        sum[key] = {"date": d3.timeParse("%Y-%m-%d")(key), "value": sumCasos + casos[key]};
-                        sumCasos = sumCasos + casos[key];
+                var dateArr = getDateArray(startDate, endDate);
+                for (var i = 0; i < dateArr.length; i++) {
+                    var cdVal;
+                    if(casos[dateArr[i]] == undefined){
+                        cdVal = 0;
+                    }else{
+                        cdVal = casos[dateArr[i]]
                     }
+                    casosDia.push({"date": d3.timeParse("%Y-%m-%d")(dateArr[i]), "value": cdVal});
+                    sum[dateArr[i]] = {"date": d3.timeParse("%Y-%m-%d")(dateArr[i]), "value": sumCasos + cdVal};
+                    sumCasos = sumCasos + cdVal;
                 }
+                console.log(sum);
+
                 for (var key in departamentos) {
                     if (departamentos.hasOwnProperty(key)) {
                         departamentosTot.push({"Departamento": key, "value": departamentos[key]['value']});
@@ -417,7 +451,7 @@
                     .style("text-anchor", "middle")
                     .text("Número de casos"); 
 
-                departamentosTot.sort(function(a, b) { return d3.descending(a.value, b.value)})
+                departamentosTot.sort(function(a, b) { return d3.descending(a.value, b.value)});
                 var svg = d3.select("#chart4")
                   .append("svg")
                     .attr("width", width + margin.left + margin.right)
@@ -551,7 +585,7 @@
                     processData();
                 });
                 $('#municipios').change(function(){
-                    console.log($(this).val());
+                    //console.log($(this).val());
                     processData();
                 });
             });
