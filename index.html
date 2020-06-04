@@ -16,6 +16,27 @@
             .Fallecido{
                 color: #F65568;
             }
+            .white-overlay{
+                position: fixed;
+                top: 0px;
+                left: 0px;
+                right: 0px;
+                height: 100vh;
+                background: rgba(255,255,255,0.5);
+            }
+            .white-overlay .container{
+                margin: 0;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                -ms-transform: 
+                    translateY(-50%)
+                    translateX(-50%);
+                transform:
+                    translateY(-50%)
+                    translateX(-50%);
+                text-align: center;
+            }
         </style>
     </head>
     <body>
@@ -124,7 +145,7 @@
                                         <td scope="col">Departamento</td>
                                         <td scope="col">Edad</td>
                                         <td scope="col">Sexo</td>
-                                        <td scope="col">Diagnóstico<br><small>(AAAA-MM-DD)</small></td>
+                                        <td scope="col">Reporte<br><small>(AAAA-MM-DD)</small></td>
                                         <td scope="col">Estado</td>
                                     </tr>
                                 </thead>
@@ -132,6 +153,53 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="white-overlay">
+            <div class="container">
+                <div class="row">
+                    <div class="preloader-wrapper big active">
+                          <div class="spinner-layer spinner-blue">
+                            <div class="circle-clipper left">
+                              <div class="circle"></div>
+                            </div><div class="gap-patch">
+                              <div class="circle"></div>
+                            </div><div class="circle-clipper right">
+                              <div class="circle"></div>
+                            </div>
+                          </div>
+
+                          <div class="spinner-layer spinner-red">
+                            <div class="circle-clipper left">
+                              <div class="circle"></div>
+                            </div><div class="gap-patch">
+                              <div class="circle"></div>
+                            </div><div class="circle-clipper right">
+                              <div class="circle"></div>
+                            </div>
+                          </div>
+
+                          <div class="spinner-layer spinner-yellow">
+                            <div class="circle-clipper left">
+                              <div class="circle"></div>
+                            </div><div class="gap-patch">
+                              <div class="circle"></div>
+                            </div><div class="circle-clipper right">
+                              <div class="circle"></div>
+                            </div>
+                          </div>
+
+                          <div class="spinner-layer spinner-green">
+                            <div class="circle-clipper left">
+                              <div class="circle"></div>
+                            </div><div class="gap-patch">
+                              <div class="circle"></div>
+                            </div><div class="circle-clipper right">
+                              <div class="circle"></div>
+                            </div>
+                          </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -154,17 +222,19 @@
             function loadData(){
                 d3.csv("https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessType=DOWNLOAD").then(function(data){
                     rawData = data;
-                    rawData.sort(function(a, b) { return d3.ascending(a["Fecha diagnostico"], b["Fecha diagnostico"])})
+                    rawData.sort(function(a, b) { return d3.ascending(a["fecha reporte web"], b["fecha reporte web"])});
                     processData();
                 });
             }
 
             function processData(){
+                $('.white-overlay').show();
+                $('#loader .determinate').css('width', '10%');
                 casos = {}; sum = {}; departamentos = {}; municipios = {}; departamentosTot = []; municipiosTot = []; casosDia = []; sumCasos = 0; rec = 0; dea = 0;
                 var depar = $('#departamentos').val();
                 var muni = $('#municipios').val();
                 var rows = [];
-                var startDate = new Date(rawData[0]["Fecha diagnostico"]), endDate = new Date(rawData[rawData.length-1]["Fecha diagnostico"]);
+                var startDate = new Date(rawData[0]["fecha reporte web"]), endDate = new Date(rawData[rawData.length-1]["fecha reporte web"]);console.log(rawData[rawData.length-1]);
                 var formatDate = function(date){let day = date.getDate()
                     let month = date.getMonth() + 1
                     let year = date.getFullYear()
@@ -194,12 +264,14 @@
                 
                 $('.tbody').html('');
 
+                $('#loader .determinate').css('width', '20%');
+
                 rawData.forEach(element => {
                     if((muni && element["Ciudad de ubicación"] == muni) || (depar && element["Departamento o Distrito "] == depar && !muni) || (!depar && !muni)){
-                        if(casos[element["Fecha diagnostico"].substring(0,10)] !== undefined){
-                            casos[element["Fecha diagnostico"].substring(0,10)] += 1;
+                        if(casos[element["fecha reporte web"].substring(0,10)] !== undefined){
+                            casos[element["fecha reporte web"].substring(0,10)] += 1;
                         }else{
-                            casos[element["Fecha diagnostico"].substring(0,10)] = 1;
+                            casos[element["fecha reporte web"].substring(0,10)] = 1;
                         }
                         if(departamentos[element["Departamento o Distrito "]] !== undefined){
                             departamentos[element["Departamento o Distrito "]]["value"] += 1;
@@ -231,13 +303,17 @@
                             municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] = 1;
                         }
 
-                        var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Ciudad de ubicación']+"</td><td>"+element['Departamento o Distrito ']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+element["Fecha diagnostico"].substring(0,10)+"</td><td class='"+element['atención']+"'>"+element['atención']+isDead+"</td></tr>";
-                        $('.tbody').append(row);
-                        //rows.push({"ID":element['ID de caso'], "Ciudad":element['Ciudad de ubicación'], "Departamento":element['Departamento o Distrito '], "Edad":element['Edad'], "Sexo":element['Sexo'], "Diagnóstico (AAAA-MM-DD)":element["Fecha diagnostico"].substring(0,10),"Estado":element['atención']+isDead});
+                        if(muni){
+                            var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Ciudad de ubicación']+"</td><td>"+element['Departamento o Distrito ']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+element["fecha reporte web"].substring(0,10)+"</td><td class='"+element['atención']+"'>"+element['atención']+isDead+"</td></tr>";
+                            $('.tbody').append(row);
+                        }
                     }
                 });
 
+                $('#loader .determinate').css('width', '30%');
+
                 var dateArr = getDateArray(startDate, endDate);
+
                 for (var i = 0; i < dateArr.length; i++) {
                     var cdVal;
                     if(casos[dateArr[i]] == undefined){
@@ -249,7 +325,6 @@
                     sum[dateArr[i]] = {"date": d3.timeParse("%Y-%m-%d")(dateArr[i]), "value": sumCasos + cdVal};
                     sumCasos = sumCasos + cdVal;
                 }
-                console.log(sum);
 
                 for (var key in departamentos) {
                     if (departamentos.hasOwnProperty(key)) {
@@ -271,7 +346,12 @@
 
                 sum = Object.values(sum);
                 
+                $('#loader .determinate').css('width', '40%');
+
                 drawGraphic();
+
+                $('#loader .determinate').css('width', '100%');
+                $('.white-overlay').hide();
             }
 
             function drawGraphic(){
@@ -298,11 +378,11 @@
                     .selectAll("text")
                         .attr("transform", "translate(-10,0)rotate(-45)")
                         .style("text-anchor", "end");
-                /*var ticks = d3.selectAll(".tick text");
+                var ticks = d3.selectAll("#chart1 .tick text");
 
                 ticks.each(function(_, i) {
                   if (i % 2 != 0) d3.select(this).remove();
-                });*/
+                });
 
                 var y = d3.scaleLinear()
                     .domain([0, d3.max(sum, function(d) { return d.value; })])
@@ -333,6 +413,7 @@
                     .style("text-anchor", "middle")
                     .text("Casos confirmados acumulados"); 
                 
+                $('#loader .determinate').css('width', '50%');
 
                 //BARRAS
                 var svg = d3.select("#chart2")
@@ -352,6 +433,11 @@
                     .selectAll("text")
                         .attr("transform", "translate(-10,0)rotate(-45)")
                         .style("text-anchor", "end");
+                var ticks = d3.selectAll("#chart2 .tick text");
+
+                ticks.each(function(_, i) {
+                  if (i % 2 != 0) d3.select(this).remove();
+                });
                 var y = d3.scaleLinear()
                     .domain([0, d3.max(casosDia, function(d) { return d.value; })])
                     .range([ height, 0]);
@@ -390,6 +476,7 @@
                     .style("text-anchor", "middle")
                     .text("Casos confirmados diarios"); 
 
+                $('#loader .determinate').css('width', '60%');
                 
                 var color = d3.scaleOrdinal()
                     .domain(["Confirmados","Activos","Recuperados","Fallecidos"])
@@ -451,6 +538,8 @@
                     .style("text-anchor", "middle")
                     .text("Número de casos"); 
 
+                $('#loader .determinate').css('width', '70%');
+
                 departamentosTot.sort(function(a, b) { return d3.descending(a.value, b.value)});
                 var svg = d3.select("#chart4")
                   .append("svg")
@@ -509,6 +598,8 @@
                     .attr("dy", "1em")
                     .style("text-anchor", "middle")
                     .text("Departamento"); 
+
+                $('#loader .determinate').css('width', '80%');
 
                 municipiosTot.sort(function(a, b) { return d3.descending(a.value, b.value)});
                 var svg = d3.select("#chart5")
@@ -570,6 +661,8 @@
                     .text("Municipio");
 
                 $('select').formSelect();
+
+                $('#loader .determinate').css('width', '90%');
             }
 
             $(document).ready(function(){
@@ -585,7 +678,6 @@
                     processData();
                 });
                 $('#municipios').change(function(){
-                    //console.log($(this).val());
                     processData();
                 });
             });
