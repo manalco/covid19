@@ -37,6 +37,21 @@
                     translateX(-50%);
                 text-align: center;
             }
+            span.last_date{
+                font-weight: bold;
+            }
+            span.last_confirmed{
+                font-weight: bold;
+                color: steelblue;
+            }
+            span.last_recovered{
+                font-weight: bold;
+                color: #6A9E4C;
+            }
+            span.last_dead{
+                font-weight: bold;
+                color: #F65568;
+            }
         </style>
     </head>
     <body>
@@ -76,6 +91,20 @@
                                 </div>
                             </form>
                             <div class="clearfix"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12">
+                    <div class="card green lighten-4">
+                        <div class="card-content">
+                            <div class="row" style="margin-bottom: 0px;">
+                                <div class="col s12 m4">Última actualización: <span class="last_date"></span></div>
+                                <div class="col s12 m4">Nuevos confirmados: <span class="last_confirmed"></span></div>
+                                <div class="col s12 m4">Nuevos recuperados: <span class="last_recovered"></span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -211,7 +240,7 @@
         <script src="https://pagination.js.org/dist/2.1.5/pagination.min.js"></script>
         <script>
             var margin = {top: 20, right: 20, bottom: 70, left: 40}, rawData, height, width, barras;
-            var casos = {}, sum = {}, departamentos = {}, municipios = {}, departamentosTot = [], municipiosTot = [], casosDia = [];
+            var casos = {}, muertes = {}; recuperados = {}; sum = {}, departamentos = {}, municipios = {}, departamentosTot = [], municipiosTot = [], casosDia = [];
             var sumCasos = 0, rec = 0, dea = 0;
             const formatNumber = d3.format(",d");
             width = d3.select("#chart1").node().getBoundingClientRect().width - margin.left - margin.right;
@@ -230,11 +259,11 @@
             function processData(){
                 $('.white-overlay').show();
                 $('#loader .determinate').css('width', '10%');
-                casos = {}; sum = {}; departamentos = {}; municipios = {}; departamentosTot = []; municipiosTot = []; casosDia = []; sumCasos = 0; rec = 0; dea = 0;
+                casos = {}; muertes = {}; recuperados = {}; sum = {}; departamentos = {}; municipios = {}; departamentosTot = []; municipiosTot = []; casosDia = []; muertesDia = []; recuperacionesDia = []; sumCasos = 0; rec = 0; dea = 0;
                 var depar = $('#departamentos').val();
                 var muni = $('#municipios').val();
                 var rows = [];
-                var startDate = new Date(rawData[0]["fecha reporte web"]), endDate = new Date(rawData[rawData.length-1]["fecha reporte web"]);console.log(rawData[rawData.length-1]);
+                var startDate = new Date(rawData[0]["fecha reporte web"]), endDate = new Date(rawData[rawData.length-1]["fecha reporte web"]);
                 var formatDate = function(date){let day = date.getDate()
                     let month = date.getMonth() + 1
                     let year = date.getFullYear()
@@ -272,6 +301,16 @@
                             casos[element["fecha reporte web"].substring(0,10)] += 1;
                         }else{
                             casos[element["fecha reporte web"].substring(0,10)] = 1;
+                        }
+                        if(muertes[element["Fecha de muerte"].substring(0,10)] !== undefined){
+                            muertes[element["Fecha de muerte"].substring(0,10)] += 1;
+                        }else{
+                            muertes[element["Fecha de muerte"].substring(0,10)] = 1;
+                        }
+                        if(recuperados[element["Fecha recuperado"].substring(0,10)] !== undefined){
+                            recuperados[element["Fecha recuperado"].substring(0,10)] += 1;
+                        }else{
+                            recuperados[element["Fecha recuperado"].substring(0,10)] = 1;
                         }
                         if(departamentos[element["Departamento o Distrito "]] !== undefined){
                             departamentos[element["Departamento o Distrito "]]["value"] += 1;
@@ -316,15 +355,33 @@
 
                 for (var i = 0; i < dateArr.length; i++) {
                     var cdVal;
+                    var cdmVal;
+                    var cdrVal;
                     if(casos[dateArr[i]] == undefined){
                         cdVal = 0;
                     }else{
-                        cdVal = casos[dateArr[i]]
+                        cdVal = casos[dateArr[i]];
                     }
-                    casosDia.push({"date": d3.timeParse("%Y-%m-%d")(dateArr[i]), "value": cdVal});
+                    if(muertes[dateArr[i]] == undefined){
+                        cdmVal = 0;
+                    }else{
+                        cdmVal = muertes[dateArr[i]];
+                    }
+                    if(recuperados[dateArr[i]] == undefined){
+                        cdrVal = 0;
+                    }else{
+                        cdrVal = recuperados[dateArr[i]];
+                    }
+                    casosDia.push({"date": d3.timeParse("%Y-%m-%d")(dateArr[i]), "value": cdVal, "muertes": cdmVal, "recuperados": cdrVal});
                     sum[dateArr[i]] = {"date": d3.timeParse("%Y-%m-%d")(dateArr[i]), "value": sumCasos + cdVal};
                     sumCasos = sumCasos + cdVal;
                 }
+
+                var last = casosDia[casosDia.length-1];
+                $('span.last_date').text(last.date.toString().substring(4,15));
+                $('span.last_confirmed').text(last.value);
+                $('span.last_recovered').text(last.recuperados);
+                //$('span.last_dead').text(last.muertes);
 
                 for (var key in departamentos) {
                     if (departamentos.hasOwnProperty(key)) {
