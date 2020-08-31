@@ -135,6 +135,7 @@
                     <div class="card">
                         <div class="card-content">
                             <span class="card-title">Casos por Día</span>
+                            <div class="overlay">Fecha: <span class="fecha"></span><br>Casos: <span class="casos"></span></div>
                             <div id="chart2"></div>
                         </div>
                     </div>
@@ -439,6 +440,7 @@
 
                 ticks.each(function(_, i) {
                   if (i % 2 != 0) d3.select(this).remove();
+                  if (i % 3 != 0) d3.select(this).remove();
                 });
 
                 var y = d3.scaleLinear()
@@ -494,6 +496,7 @@
 
                 ticks.each(function(_, i) {
                   if (i % 2 != 0) d3.select(this).remove();
+                  if (i % 3 != 0) d3.select(this).remove();
                 });
                 var y = d3.scaleLinear()
                     .domain([0, d3.max(casosDia, function(d) { return d.value; })])
@@ -509,7 +512,16 @@
                             .attr("width", x.bandwidth())
                             .attr("height", function(d) { return height - y(d.value); })
                             .attr("fill", '#4682B4')
-                svg.selectAll("mybar")
+                            .on("mouseover", function(d){
+                                $('#chart2').parent().find('.overlay .fecha').text(d.date.toString().substring(4,15));
+                                $('#chart2').parent().find('.overlay .casos').text(d.value);
+                                d3.select(this).attr("fill", '#ff0000');
+                            })
+                            .on("mouseout", function(d){
+                                d3.select(this).attr("fill", '#4682B4');
+                            });
+
+                /*svg.selectAll("mybar")
                     .data(casosDia)
                     .enter()
                         .append("text")
@@ -518,7 +530,7 @@
                             .text( (d) => d.value )
                                 .style("fill", "black")
                                 .style("font-family", "Helvetica")
-                                .style("font-size", "10px");
+                                .style("font-size", "10px");*/
                 svg.append("text")             
                     .attr("transform",
                         "translate(" + (width/2) + " ," + 
