@@ -308,10 +308,10 @@
                         }else{
                             muertes[element["Fecha de muerte"].substring(0,10)] = 1;
                         }
-                        if(recuperados[element["Fecha recuperado"].substring(0,10)] !== undefined){
-                            recuperados[element["Fecha recuperado"].substring(0,10)] += 1;
+                        if(recuperados[element["Fecha de recuperación"].substring(0,10)] !== undefined){
+                            recuperados[element["Fecha de recuperación"].substring(0,10)] += 1;
                         }else{
-                            recuperados[element["Fecha recuperado"].substring(0,10)] = 1;
+                            recuperados[element["Fecha de recuperación"].substring(0,10)] = 1;
                         }
                         if(departamentos[element["Departamento o Distrito "]] !== undefined){
                             departamentos[element["Departamento o Distrito "]]["value"] += 1;
