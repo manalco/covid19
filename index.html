@@ -328,12 +328,12 @@
                                 departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] = 1;
                             }
                         }
-                        if(element["atención"].indexOf("Recuperado") >= 0){
+                        if(element["Ubicación del caso"].indexOf("Recuperado") >= 0){
                             rec++;
                         }
 
                         var isDead = '';
-                        if(element["atención"].indexOf("Fallecido") >= 0){
+                        if(element["Ubicación del caso"].indexOf("Fallecido") >= 0){
                             dea++;
                             isDead = " ("+element['Fecha de muerte'].substring(0,10)+")";
                         }
@@ -344,7 +344,7 @@
                         }
 
                         if(muni){
-                            var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Ciudad de ubicación']+"</td><td>"+element['Departamento o Distrito ']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+element["fecha reporte web"].substring(0,10)+"</td><td class='"+element['atención']+"'>"+element['atención']+isDead+"</td></tr>";
+                            var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Ciudad de ubicación']+"</td><td>"+element['Departamento o Distrito ']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+element["fecha reporte web"].substring(0,10)+"</td><td class='"+element['Ubicación del caso']+"'>"+element['Ubicación del caso']+isDead+"</td></tr>";
                             $('.tbody').append(row);
                         }
                     }
