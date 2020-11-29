@@ -250,11 +250,16 @@
             loadData();
 
             function loadData(){
-                d3.csv("https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessType=DOWNLOAD").then(function(data){
-                    rawData = data;
-                    rawData.sort(function(a, b) { return d3.ascending(a["fecha reporte web"], b["fecha reporte web"])});
-                    processData();
-                });
+                try{
+                    d3.csv("https://www.datos.gov.co/api/views/gt2j-8ykr/rows.csv?accessType=DOWNLOAD").then(function(data){
+                        rawData = data;
+                        rawData.sort(function(a, b) { return d3.ascending(a["fecha reporte web"], b["fecha reporte web"])});
+                        processData();
+                    });
+                }catch(e){
+                    console.log('error');
+                    console.log(e);
+                }
             }
 
             function processData(){
@@ -264,7 +269,10 @@
                 var depar = $('#departamentos').val();
                 var muni = $('#municipios').val();
                 var rows = [];
-                var startDate = new Date(rawData[0]["fecha reporte web"]), endDate = new Date(rawData[rawData.length-1]["fecha reporte web"]);
+
+                var startDate = new Date(Date.parse("March 6, 2020"));//rawData[0]["fecha reporte web"])
+                var endDate = new Date();//new Date(rawData[rawData.length-1]["fecha reporte web"]);
+                console.log(rawData[rawData.length-1]);
                 var formatDate = function(date){let day = date.getDate()
                     let month = date.getMonth() + 1
                     let year = date.getFullYear()
@@ -296,55 +304,69 @@
 
                 $('#loader .determinate').css('width', '20%');
 
+                function getMyDate(d){
+                    d = d.replace(" 0:00:00", "");
+                    var arr = d.split('/');
+                    var yyyy = arr[2];
+                    var mm = arr[1] < 10 ? "0" + arr[1] : arr[1];
+                    var dd = arr[0] < 10 ? "0" + arr[0] : arr[0];
+                    return yyyy+"-"+mm+"-"+dd;
+                }
+
                 rawData.forEach(element => {
-                    if((muni && element["Ciudad de ubicación"] == muni) || (depar && element["Departamento o Distrito "] == depar && !muni) || (!depar && !muni)){
-                        if(casos[element["fecha reporte web"].substring(0,10)] !== undefined){
-                            casos[element["fecha reporte web"].substring(0,10)] += 1;
+                    if((muni && element["Nombre municipio"] == muni) || (depar && element["Nombre departamento"] == depar && !muni) || (!depar && !muni)){
+                        var fechaReporteWeb = getMyDate(element["fecha reporte web"]);
+                        if(casos[fechaReporteWeb] !== undefined){
+                            casos[fechaReporteWeb] += 1;
                         }else{
-                            casos[element["fecha reporte web"].substring(0,10)] = 1;
+                            casos[fechaReporteWeb] = 1;
                         }
-                        if(muertes[element["Fecha de muerte"].substring(0,10)] !== undefined){
-                            muertes[element["Fecha de muerte"].substring(0,10)] += 1;
+
+                        var fechaMuerte = getMyDate(element["Fecha de muerte"]);
+                        if(muertes[fechaMuerte] !== undefined){
+                            muertes[fechaMuerte] += 1;
                         }else{
-                            muertes[element["Fecha de muerte"].substring(0,10)] = 1;
+                            muertes[fechaMuerte] = 1;
                         }
-                        if(recuperados[element["Fecha de recuperación"].substring(0,10)] !== undefined){
-                            recuperados[element["Fecha de recuperación"].substring(0,10)] += 1;
+
+                        var fechaRecuperacion = getMyDate(element["Fecha de recuperación"]);
+                        if(recuperados[fechaRecuperacion] !== undefined){
+                            recuperados[fechaRecuperacion] += 1;
                         }else{
-                            recuperados[element["Fecha de recuperación"].substring(0,10)] = 1;
+                            recuperados[fechaRecuperacion] = 1;
                         }
-                        if(departamentos[element["Departamento o Distrito "]] !== undefined){
-                            departamentos[element["Departamento o Distrito "]]["value"] += 1;
-                            if(departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] !== undefined){
-                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] += 1;
+                        if(departamentos[element["Nombre departamento"]] !== undefined){
+                            departamentos[element["Nombre departamento"]]["value"] += 1;
+                            if(departamentos[element["Nombre departamento"]][element["Nombre municipio"]] !== undefined){
+                                departamentos[element["Nombre departamento"]][element["Nombre municipio"]] += 1;
                             }else{
-                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] = 1;
+                                departamentos[element["Nombre departamento"]][element["Nombre municipio"]] = 1;
                             }
                         }else{
-                            departamentos[element["Departamento o Distrito "]] = {"value":1};
-                            if(departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] !== undefined){
-                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] += 1;
+                            departamentos[element["Nombre departamento"]] = {"value":1};
+                            if(departamentos[element["Nombre departamento"]][element["Nombre municipio"]] !== undefined){
+                                departamentos[element["Nombre departamento"]][element["Nombre municipio"]] += 1;
                             }else{
-                                departamentos[element["Departamento o Distrito "]][element["Ciudad de ubicación"]] = 1;
+                                departamentos[element["Nombre departamento"]][element["Nombre municipio"]] = 1;
                             }
                         }
-                        if(element["Ubicación del caso"].indexOf("Recuperado") >= 0){
+                        if(element["Recuperado"] == "Recuperado"){
                             rec++;
                         }
 
                         var isDead = '';
                         if(element["Ubicación del caso"].indexOf("Fallecido") >= 0){
                             dea++;
-                            isDead = " ("+element['Fecha de muerte'].substring(0,10)+")";
+                            isDead = " ("+fechaMuerte+")";
                         }
-                        if(municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] !== undefined){
-                            municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] += 1;
+                        if(municipios[element["Nombre municipio"]+" ("+element["Nombre departamento"]+")"] !== undefined){
+                            municipios[element["Nombre municipio"]+" ("+element["Nombre departamento"]+")"] += 1;
                         }else{
-                            municipios[element["Ciudad de ubicación"]+" ("+element["Departamento o Distrito "]+")"] = 1;
+                            municipios[element["Nombre municipio"]+" ("+element["Nombre departamento"]+")"] = 1;
                         }
 
                         if(muni){
-                            var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Ciudad de ubicación']+"</td><td>"+element['Departamento o Distrito ']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+element["fecha reporte web"].substring(0,10)+"</td><td class='"+element['Ubicación del caso']+"'>"+element['Ubicación del caso']+isDead+"</td></tr>";
+                            var row = "<tr><td>"+element['ID de caso']+"</td><td>"+element['Nombre municipio']+"</td><td>"+element['Nombre departamento']+"</td><td>"+element['Edad']+"</td><td>"+element['Sexo']+"</td><td>"+fechaReporteWeb+"</td><td class='"+element['Ubicación del caso']+"'>"+element['Ubicación del caso']+isDead+"</td></tr>";
                             $('.tbody').append(row);
                         }
                     }
@@ -521,16 +543,6 @@
                                 d3.select(this).attr("fill", '#4682B4');
                             });
 
-                /*svg.selectAll("mybar")
-                    .data(casosDia)
-                    .enter()
-                        .append("text")
-                            .attr("x", function(d) { return x( d.date) + x.bandwidth()/2 - 10; })
-                            .attr("y", function(d) { return y(d.value) - 5; })
-                            .text( (d) => d.value )
-                                .style("fill", "black")
-                                .style("font-family", "Helvetica")
-                                .style("font-size", "10px");*/
                 svg.append("text")             
                     .attr("transform",
                         "translate(" + (width/2) + " ," + 
